@@ -49,8 +49,7 @@ class Assignment:
         # datetime objects are not directly serializable, need to convert to string
         new_dict = {
             "name": self.name,
-            "due_date": self.due_date.strftime('%Y-%m-%d'),
-            "due_time": self.due_time.strftime('%H:%M'),
+            "due_date": self.due_date.strftime("%Y-%m-%d"),
+            "due_time": self.due_time.strftime("%H:%M"),
         }
         return new_dict
-        

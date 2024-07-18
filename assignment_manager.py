@@ -26,8 +26,10 @@ class AssignmentManager:
         Removes assignment by name from the manager
         """
         if assignment_name in self.assignments:
+            removed = self.assignments[assignment_name]
             del self.assignments[assignment_name]
             print(f"{assignment_name} removed.")
+            return removed
         else:
             print(f"No assignment named {assignment_name}")
 
@@ -62,9 +64,7 @@ class AssignmentManager:
                 datetime.now().date() <= assignment.due_date <= week_end
             ):  # If within week, add assignment to week_assignments
                 week_assignments.append(assignment)
-                print(
-                    f"{assignment.name}: {assignment.get_due_str()}"
-                )
+                print(f"{assignment.name}: {assignment.get_due_str()}")
         if not week_assignments:
             print("No assignments this week!\n")
 
@@ -102,14 +102,26 @@ class AssignmentManager:
         assignments_dict = {}
         for assignment in self.assignments.values():
             assignments_dict[assignment.name] = assignment.to_dictionary()
-            
-        with open(filename, "w") as f:
-            json.dump(assignments_dict, f, indent = 2)
-            
-    
+        try:
+            with open(filename, "w") as f:
+                json.dump(assignments_dict, f, indent=2)
+        except TypeError:
+            print("There was an error with serializing the assignments.")
+        except IOError:
+            print(f"There was an error with saving to {filename}.")
+
     def load_from_json(self, saved_assignments):
-        with open("saved_assignments.json", "r") as json_file:
-            data = json.load(json_file)
-            for assignment_dict in data.values():
-                assignment = Assignment(assignment_dict["name"], assignment_dict["due_date"], assignment_dict["due_time"])
-                self.assignments[assignment.name] = assignment
+        try:
+            with open("saved_assignments.json", "r") as json_file:
+                data = json.load(json_file)
+                for assignment_dict in data.values():
+                    assignment = Assignment(
+                        assignment_dict["name"],
+                        assignment_dict["due_date"],
+                        assignment_dict["due_time"],
+                    )
+                    self.assignments[assignment.name] = assignment
+        except FileNotFoundError:
+            print("This file was not found.")
+        except json.JSONDecodeError:
+            print("This file has invalid JSON data.")
