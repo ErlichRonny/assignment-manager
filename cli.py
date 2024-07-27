@@ -27,7 +27,7 @@ def main():
                 due_time = input("What time is it due? ")
                 tracker.add_assignment(Assignment(name, due_date, due_time))
             else:
-                print(f"Invalid name: {name} already exists!")
+                print(f"Invalid name: {name} already exists")
         elif choice == 2:
             # Delete an assignment
             tracker.print_sorted_assignments()

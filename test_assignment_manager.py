@@ -41,16 +41,9 @@ class TestAssignmentManager(unittest.TestCase):
         new_name = "French Homework"
         self.assignments.add_assignment(Assignment("Physics Homework", "07-19-2024", "7:00"))
         old_assignment = self.assignments.find_assignment("Physics Homework")
-     #   self.assignments.change_name(
-      #      self.assignments.find_assignment("English Homework"), "Spanish Homework"
-       # )
         self.assignments.change_name(old_assignment, new_name)
         updated_assignment = self.assignments.find_assignment(new_name)
         self.assertEqual(updated_assignment.name, new_name)
-       # self.assertEqual(
-       #     self.assignments.find_assignment("English Homework").name,
-       #     "Spanish Homework",
-       # )
 
     def test_change_due_date(self):
         """Tests changing an assignment due date"""

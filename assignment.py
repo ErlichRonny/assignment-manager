@@ -4,7 +4,7 @@ import sqlite3
 
 class Assignment:
     """
-    Represents assignments with a name, due date, and due time
+    Represents assignments with a name, due date, and due time.
     """
 
     def __init__(self, name, due_date, due_time):

@@ -6,7 +6,7 @@ import dateparser
 
 class AssignmentManager:
     """
-    Manages assignments using an SQLite database
+    Manages assignments using an SQLite database.
     """
 
     def __init__(self, db_name="assignments.db"):
