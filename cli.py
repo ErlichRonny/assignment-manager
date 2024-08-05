@@ -7,7 +7,6 @@ def main():
     Runs command-line interface to manage assignments
     """
     tracker = AssignmentManager()
-
     while True:
         print(
             "\n 1. Add Assignment\n 2. Delete Assignment\n 3. Modify Assignment \n 4. Sort by Due Date\n 5. View the week's assignments\n 6. Quit\n"
