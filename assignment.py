@@ -1,19 +1,19 @@
 from datetime import datetime
 import dateparser
-
+import sqlite3
 
 class Assignment:
     """
-    Represents assignments with a name, due date, and due time
+    Represents assignments with a name, due date, and due time.
     """
 
-    def __init__(self, name, due_date_input, due_time_input):
+    def __init__(self, name, due_date, due_time):
         """
         Initializes assignments with name, due date, due time
         """
         self.name = name
-        self.due_date = dateparser.parse(due_date_input).date()
-        self.due_time = dateparser.parse(due_time_input).time()
+        self.due_date = dateparser.parse(due_date).date()
+        self.due_time = dateparser.parse(due_time).time()
 
     def get_due(self):
         """

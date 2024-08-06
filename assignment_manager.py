@@ -1,94 +1,152 @@
 from datetime import datetime, timedelta
 from assignment import Assignment
-import json
+import sqlite3
+import dateparser
 
 
 class AssignmentManager:
     """
-    Manages a dictionary of assignments
+    Manages assignments using an SQLite database.
     """
 
-    def __init__(self):
+    def __init__(self, db_name="assignments.db"):
         """
-        Initializes empty dictionary to manage assignments
+        Connects to database and sets up table
         """
-        self.assignments = {}
+        self.conn = sqlite3.connect(db_name)
+        self.cursor = self.conn.cursor()
+        self.setup_database()
+
+    def setup_database(self):
+        """
+        Creates assignments table
+        """
+        self.cursor.execute(
+            """CREATE TABLE IF NOT EXISTS assignments (
+                name TEXT,
+                date TEXT,
+                time TEXT
+            )"""
+        )
+        self.conn.commit()
 
     def add_assignment(self, assignment):
-        """
-        Adds a new assignment to the manager
-        """
-        self.assignments[assignment.name] = assignment
-        print(f"{assignment.name} added.")
+        try:
+            with self.conn:
+                self.cursor.execute(
+                    "INSERT INTO assignments (name, date, time) VALUES (?,?,?)",
+                    (
+                        assignment.name,
+                        assignment.due_date.strftime("%Y-%m-%d"),
+                        assignment.due_time.strftime("%H:%M"),
+                    ),
+                )
+            print(f"{assignment.name} added.")
+        except sqlite3.Error as error:
+            print(f"Error adding assignment: {error}")
 
     def remove_assignment(self, assignment_name):
         """
         Removes assignment by name from the manager
         """
-        if assignment_name in self.assignments:
-            removed = self.assignments[assignment_name]
-            del self.assignments[assignment_name]
-            print(f"{assignment_name} removed.")
-            return removed
-        else:
-            print(f"No assignment named {assignment_name}")
+        try:
+            removed = self.find_assignment(assignment_name)
+            with self.conn:
+                self.cursor.execute(
+                    "DELETE from assignments WHERE name = ?", (assignment_name,)
+                )
+                if self.cursor.rowcount == 1:
+                    print(f"{assignment_name} removed.")
+                    return removed
+                else:
+                    print(f"No assignment named {assignment_name}")
+                    return None
+        except sqlite3.Error as error:
+            print(f"Error removing assignment: {error}")
 
     def print_sorted_assignments(self):
         """
         Prints all assignments, sorted by due date
         """
-        sorted_assignments = sorted(
-            self.assignments.values(), key=lambda x: x.get_due()
-        )  # Sort assignments by due date
-        print("\nUpcoming Assignments:\n")
-        if not sorted_assignments:
-            print("No upcoming assignments!")
-        for assignment in sorted_assignments:
-            print(f"{assignment.name}: {assignment.get_due_str()}")
+        try:
+            with self.conn:
+                self.cursor.execute(
+                    "SELECT * FROM assignments ORDER BY date ASC, time ASC "
+                )
+                sorted_assignments = self.cursor.fetchall()
+            if not sorted_assignments:
+                print("No upcoming assignments!")
+                return
+            print("\nUpcoming Assignments:\n")
+            for row in sorted_assignments:
+                print(f"{row[0]}: Due on {row[1]} at {row[2]}")
+        except sqlite3.Error as error:
+            print(f"Error printing assignments: {error}")
 
     def print_weeks_assignments(self):
         """
         Prints assignments that are due within the upcoming week
         """
-        sorted_assignments = sorted(
-            self.assignments.values(), key=lambda x: x.get_due()
-        )  # Sort assignments by due date
-        week_end = datetime.now().date() + timedelta(
-            days=7
-        )  # Calculate 1 week from now
-        week_assignments = []
-        print("\nUpcoming Week's Assignments:\n")
+        try:
+            week_start = datetime.now().date()
+            week_end = datetime.now().date() + timedelta(days=7)
+            with self.conn:
+                self.cursor.execute(
+                    "SELECT * FROM assignments WHERE date BETWEEN ? and ? ORDER BY date ASC, time ASC",
+                    (week_start, week_end),
+                )
+                sorted_assignments = self.cursor.fetchall()
+            if not sorted_assignments:
+                print("No assignments this week!\n")
+                return
+            print("\nUpcoming Week's Assignments:\n")
+            for row in sorted_assignments:
+                print(f"{row[0]}: Due on {row[1]} at {row[2]}")
+        except sqlite3.Error as error:
+            print(f"Error printing current week's assignments: {error}")
 
-        for assignment in sorted_assignments:
-            if (
-                datetime.now().date() <= assignment.due_date <= week_end
-            ):  # If within week, add assignment to week_assignments
-                week_assignments.append(assignment)
-                print(f"{assignment.name}: {assignment.get_due_str()}")
-        if not week_assignments:
-            print("No assignments this week!\n")
+    def set_database_field(self, field_name, old_field, new_field):
+        """
+        Updates specified field of an assignment
+        """
+        try:
+            with self.conn:
+                self.cursor.execute(
+                    "UPDATE assignments SET (%s) = ? WHERE (%s) = ?"
+                    % (field_name, field_name),
+                    (new_field, old_field),
+                )
+        except sqlite3.Error as error:
+            print(f"Error changing assignment name: {error}")
 
     def change_name(self, assignment, new_name):
         """
         Changes the name of an assignment
         """
         old_name = assignment.name
+        self.set_database_field("name", old_name, new_name)
         assignment.set_name(new_name)
-        print(f"Name for {old_name} changed to {new_name}.")
+        print(f"Name for {old_name} changed to {new_name}")
 
     def change_due_date(self, assignment, new_due_date):
         """
         Changes the due date of an assignment
         """
-        old_date = assignment.due_date
+        old_date = assignment.due_date.strftime("%Y-%m-%d")  # convert to string
+        new_date = (
+            dateparser.parse(new_due_date).date().strftime("%Y-%m-%d")
+        )  # parse and convert to string
+        self.set_database_field("date", old_date, new_date)
         assignment.set_due_date(new_due_date)
-        print(f"Due date for {old_date} changed to {new_due_date}.")
+        print(f"Due date for {old_date} changed to {new_date}.")
 
     def change_due_time(self, assignment, new_due_time):
         """
         Changes the due time of an assignment
         """
-        old_time = assignment.due_time
+        old_time = assignment.due_time.strftime("%H:%M")
+        new_time = dateparser.parse(new_due_time).time().strftime("%H:%M")
+        self.set_database_field("time", old_time, new_time)
         assignment.set_due_time(new_due_time)
         print(f"Due time for {old_time} changed to {new_due_time}.")
 
@@ -96,32 +154,17 @@ class AssignmentManager:
         """
         Finds an assignment by name
         """
-        return self.assignments.get(assignment_name, None)
-
-    def save_to_json(self, filename):
-        assignments_dict = {}
-        for assignment in self.assignments.values():
-            assignments_dict[assignment.name] = assignment.to_dictionary()
         try:
-            with open(filename, "w") as f:
-                json.dump(assignments_dict, f, indent=2)
-        except TypeError:
-            print("There was an error with serializing the assignments.")
-        except IOError:
-            print(f"There was an error with saving to {filename}.")
-
-    def load_from_json(self, saved_assignments):
-        try:
-            with open("saved_assignments.json", "r") as json_file:
-                data = json.load(json_file)
-                for assignment_dict in data.values():
-                    assignment = Assignment(
-                        assignment_dict["name"],
-                        assignment_dict["due_date"],
-                        assignment_dict["due_time"],
-                    )
-                    self.assignments[assignment.name] = assignment
-        except FileNotFoundError:
-            print("This file was not found.")
-        except json.JSONDecodeError:
-            print("This file has invalid JSON data.")
+            with self.conn:
+                self.cursor.execute(
+                    "SELECT * FROM assignments WHERE name = ?", (assignment_name,)
+                )
+                result = self.cursor.fetchone()
+            if result:
+                return Assignment(
+                    name=result[0], due_date=result[1], due_time=result[2]
+                )
+            else:
+                return None
+        except sqlite3.Error as error:
+            print(f"Error finding assignment: {error}")
