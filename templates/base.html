@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %} {% endblock %} - Assignment Manager</title>
+    <style>
+        body {
+            background-color: #f9f6ee;
+        }
+
+        h1 {
+            text-align: center;
+            color: #101357;
+        }
+
+        h2 {
+            color: #fbaf08;
+        }
+
+        h3 {
+            color: #e5a6a1;
+        }
+
+        nav a {
+            color: #8076a3;
+            font-size: 2.4em;
+            margin-left: 50px;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Home</a>
+        <a href="{{ url_for('view_assignments_page') }}">View Assignments</a>
+        <a href="{{ url_for('add_assignment_page') }}">Add Assignment</a>
+    </nav>
+    <hr>
+    <div class="content">
+        {% block content %} {% endblock %}
+    </div>
+</body>
+
+</html>

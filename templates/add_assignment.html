@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Add New Assignments {% endblock %}</h1>
+<h2>Give your assignment a name and deadline!</h3>
+    <form action="/add_assignment/" method="POST">
+        <div>
+            <label for="name" style="font-size: 17px;"> Assignment Name: </label>
+            <input type="text" id="name" name="name" required minlength="1" autocorrect="on" />
+        </div>
+        <div>
+            <label for="due_date" style="font-size: 17px;"> Due Date: </label>
+            <input type="date" id="due_date" name="due_date" required placeholder="mm/dd/yyyy" />
+        </div>
+        <div>
+            <label for="due_time" style="font-size: 17px;"> Due Time:</label>
+            <input type="time" id="due_time" name="due_time" required />
+        </div>
+        <div>
+            <button
+                style="margin-top: 20px; font-size:15px; padding: 10px 10px; background-color: #e5a6a1; color: white; border-radius: 10px;"
+                name="submit_assignment" type="submit"> Submit </button>
+        </div>
+    </form>
+    <script>
+        due_date.min = new Date().toLocaleDateString('fr-ca')
+    </script>
+
+    {% endblock %}

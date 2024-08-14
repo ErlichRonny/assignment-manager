@@ -13,7 +13,7 @@ class AssignmentManager:
         """
         Connects to database and sets up table
         """
-        self.conn = sqlite3.connect(db_name,check_same_thread=False)
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.setup_database()
 
@@ -105,6 +105,61 @@ class AssignmentManager:
         except sqlite3.Error as error:
             print(f"Error printing current week's assignments: {error}")
 
+    def get_weeks_assignments(self):
+        """
+        Gets assignments that are due within the upcoming week
+        """
+        try:
+            week_start = datetime.now().date()
+            week_end = datetime.now().date() + timedelta(days=7)
+            with self.conn:
+                self.cursor.execute(
+                    "SELECT * FROM assignments WHERE date BETWEEN ? and ? ORDER BY date ASC, time ASC",
+                    (week_start, week_end),
+                )
+                sorted_assignments = self.cursor.fetchall()
+            if not sorted_assignments:
+                print("No assignments this week!\n")
+                return []
+            formatted_assignments = []
+            for assignment in sorted_assignments:
+                date = datetime.strptime(assignment[1], "%Y-%m-%d")
+                time = datetime.strptime(assignment[2], "%H:%M")
+                formatted_date = date.strftime("%A, %B %d")
+                formatted_time = time.strftime("%I:%M %p")
+                formatted_assignments.append(
+                    (assignment[0], formatted_date, formatted_time)
+                )
+            return formatted_assignments
+        except sqlite3.Error as error:
+            print(f"Error printing current week's assignments: {error}")
+
+    def get_sorted_assignments(self):
+        """
+        Prints all assignments, sorted by due date
+        """
+        try:
+            with self.conn:
+                self.cursor.execute(
+                    "SELECT * FROM assignments ORDER BY date ASC, time ASC "
+                )
+                sorted_assignments = self.cursor.fetchall()
+            if not sorted_assignments:
+                print("No upcoming assignments!")
+                return []
+            formatted_assignments = []
+            for assignment in sorted_assignments:
+                date = datetime.strptime(assignment[1], "%Y-%m-%d")
+                time = datetime.strptime(assignment[2], "%H:%M")
+                formatted_date = date.strftime("%m/%d/%y")
+                formatted_time = time.strftime("%I:%M %p")
+                formatted_assignments.append(
+                    (assignment[0], formatted_date, formatted_time)
+                )
+            return formatted_assignments
+        except sqlite3.Error as error:
+            print(f"Error printing assignments: {error}")
+
     def set_database_field(self, field_name, old_field, new_field):
         """
         Updates specified field of an assignment
@@ -112,8 +167,7 @@ class AssignmentManager:
         try:
             with self.conn:
                 self.cursor.execute(
-                    "UPDATE assignments SET (%s) = ? WHERE (%s) = ?"
-                    % (field_name, field_name),
+                    f"UPDATE assignments SET {field_name} = ? WHERE {field_name} = ?",
                     (new_field, old_field),
                 )
         except sqlite3.Error as error:
@@ -168,3 +222,23 @@ class AssignmentManager:
                 return None
         except sqlite3.Error as error:
             print(f"Error finding assignment: {error}")
+
+    def most_similar(self,assignment_name):
+        """
+        Finds the assignment name that's most similar to the one given
+        """
+        assignments = self.get_sorted_assignments()
+        similar_names = []
+        correct_assignment_name = assignment_name.replace('%20', ' ')
+        for assignment in assignments:
+            same_count = 0
+            correct_name = assignment[0].replace('%20', ' ')
+            for i in range(len(correct_name)):
+                if i < len(correct_assignment_name) and correct_name[i] == correct_assignment_name[i]:
+                    same_count +=1
+            similar_names.append([assignment[0],same_count])
+            similar_names.sort(key=lambda x: x[1], reverse=True)
+            if similar_names and similar_names[0][1]>0:
+                return similar_names[0][0]
+            else:
+                return None

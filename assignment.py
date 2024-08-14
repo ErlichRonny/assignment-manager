@@ -1,6 +1,5 @@
 from datetime import datetime
 import dateparser
-import sqlite3
 
 class Assignment:
     """

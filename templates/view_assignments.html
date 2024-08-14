@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>{% block title %} Your Assignments {% endblock %}</h1>
+<div style="display: flex; justify-content: left; font-size: 17px;">
+    <table style="border-collapse: collapse; width: 50%; text-align: center;">
+        <tr>
+            <th style="color: #fbaf08; border-bottom: 1px solid black;"> Name </th>
+            <th style="color: #fbaf08; border-bottom: 1px solid black;"> Due Date </th>
+            <th style="color: #fbaf08; border-bottom: 1px solid black;"> Due Time </th>
+            <th style="color: #fbaf08; border-bottom: 1px solid black;"> Actions </th>
+        </tr>
+        {% for assignment in assignments %}
+        <tr>
+            <td style="border: 1px solid black;">{{ assignment[0] }}</td>
+            <td style="border: 1px solid black;">{{ assignment[1] }}</td>
+            <td style="border: 1px solid black;">{{ assignment[2] }}</td>
+            <td style="border: 1px solid black">
+                <a href="{{ url_for('update_assignment_page', assignment_name=assignment[0]) }}">
+                    <button
+                        style="margin-top: 20px; font-size:15px; padding: 5px 10px; background-color: #e5a6a1; border: none; color: white; border-radius: 5px;">
+                        Edit</button>
+                </a>
+                <a href="{{ url_for('remove_assignment', name=assignment[0]) }}">
+                    <button
+                        style="font-size: 14px; background-color: #f4363f; color: white; border: none; border-radius: 5px; padding: 5px 10px;">
+                        Delete</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
