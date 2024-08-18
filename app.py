@@ -10,7 +10,7 @@ manager = AssignmentManager()
 
 @app.route("/")
 def home():
-    weekly_assignments = manager.get_weeks_assignments()
+    weekly_assignments = manager.get_assignments(True)
     return render_template("home.html", assignments=weekly_assignments)
 
 
@@ -22,17 +22,18 @@ def add_assignment_page():
 @app.route("/success/")
 def success_page():
     return render_template("success.html")
-
+    #TODO: change this to show message indicating success, instead of going to home
 
 @app.route("/view_assignments/")
 def view_assignments_page():
-    all_assignments = manager.get_sorted_assignments()
+    all_assignments = manager.get_assignments()
     return render_template("view_assignments.html", assignments=all_assignments)
 
 
 @app.route("/update_assignment/<string:assignment_name>/", methods=["GET"])
 def update_assignment_page(assignment_name):
-    return render_template("update_assignment.html", name=assignment_name)
+    assignment = manager.find_assignment(assignment_name)
+    return render_template("update_assignment.html", assignment_name=assignment.name, due_date=assignment.due_date, due_time=assignment.due_time)
 
 
 @app.route("/assignments/<string:name>", methods=["GET"])
@@ -42,10 +43,9 @@ def view_assignment(name):
         pretty = f"Name: {assignment.name}, Due Date: {assignment.due_date}, Due Time: {assignment.due_time}"
         return pretty
     else:
-        closest_name = manager.most_similar(name)
-        if closest_name:
-            to_return = manager.find_assignment(closest_name)
-            return f"Closest match ---> Name: {closest_name}, Due Date: {to_return.due_date}, Due Time: {to_return.due_time}"
+        to_return = manager.most_similar(name)
+        if to_return:
+            return f"Closest match ---> Name: {to_return.name}, Due Date: {to_return.due_date}, Due Time: {to_return.due_time}"
         else:
             return {"Error": "Assignment not found"}, 404
 
