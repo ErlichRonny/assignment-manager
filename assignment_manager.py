@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from assignment import Assignment
 import sqlite3
 import dateparser
+import difflib
 
 
 class AssignmentManager:
@@ -13,7 +14,7 @@ class AssignmentManager:
         """
         Connects to database and sets up table
         """
-        self.conn = sqlite3.connect(db_name)
+        self.conn = sqlite3.connect(db_name, check_same_thread=False)
         self.cursor = self.conn.cursor()
         self.setup_database()
 
@@ -105,6 +106,43 @@ class AssignmentManager:
         except sqlite3.Error as error:
             print(f"Error printing current week's assignments: {error}")
 
+    def get_assignments(self, weeks_assignments=None):
+        """
+        Gets either all assignments, sorted by due date, or assignments that are due within the upcoming week
+        """
+        try:
+            with self.conn:
+                if weeks_assignments == True:
+                    week_start = datetime.now().date()
+                    week_end = datetime.now().date() + timedelta(days=7)
+                    self.cursor.execute(
+                        "SELECT * FROM assignments WHERE date BETWEEN ? and ? ORDER BY date ASC, time ASC",
+                        (week_start, week_end),
+                    )
+                else:
+                    self.cursor.execute(
+                        "SELECT * FROM assignments ORDER BY date ASC, time ASC "
+                    )
+            sorted_assignents = self.cursor.fetchall()
+            if not sorted_assignents and weeks_assignments:
+                print("No assignments this week!\n")
+                return []
+            elif not sorted_assignents:
+                print("No upcoming assignments!")
+                return []
+            formatted_assignments = []
+            for assignment in sorted_assignents:
+                date = datetime.strptime(assignment[1], "%Y-%m-%d")
+                time = datetime.strptime(assignment[2], "%H:%M")
+                formatted_date = date.strftime("%m/%d/%y")
+                formatted_time = time.strftime("%I:%M %p")
+                formatted_assignments.append(Assignment(
+                    assignment[0], formatted_date, formatted_time)
+                )
+            return formatted_assignments
+        except sqlite3.Error as error:
+            print(f"Error printing assignments: {error}")
+
     def set_database_field(self, field_name, old_field, new_field):
         """
         Updates specified field of an assignment
@@ -112,8 +150,7 @@ class AssignmentManager:
         try:
             with self.conn:
                 self.cursor.execute(
-                    "UPDATE assignments SET (%s) = ? WHERE (%s) = ?"
-                    % (field_name, field_name),
+                    f"UPDATE assignments SET {field_name} = ? WHERE {field_name} = ?",
                     (new_field, old_field),
                 )
         except sqlite3.Error as error:
@@ -168,3 +205,17 @@ class AssignmentManager:
                 return None
         except sqlite3.Error as error:
             print(f"Error finding assignment: {error}")
+
+    def most_similar(self, assignment_name):
+        """
+        Finds the assignment name that's most similar to the one given
+        """
+        assignments = self.get_assignments()
+        assignment_names = []
+        for assignment in assignments:
+            assignment_names.append(assignment.name)
+        similar_names = difflib.get_close_matches(assignment_name, assignment_names)
+        if similar_names:
+            return self.find_assignment(similar_names[0])
+        else:
+            return None
