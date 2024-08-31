@@ -1,29 +1,49 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>{% block title %} Add New Assignments {% endblock %}</h1>
-<h2>Give your assignment a name and deadline!</h3>
+<div class="container">
+    <h1 class="text-center">{% block title %} Add New Assignments {% endblock %}</h1>
+    <h2 class="text-center mb-3">Give your assignment a name and deadline!</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="alert-container">
+        {% for category, message in messages %}
+        <div class="alert alert-{{category}} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
     <form action="/add_assignment/" method="POST">
-        <div>
-            <label for="name" style="font-size: 17px;"> Assignment Name: </label>
-            <input type="text" id="name" name="name" required minlength="1" autocorrect="on" />
+        <div class="form-floating mb-4">
+            <input type="text" id="name" class="form-control" name="name" required minlength="1" autocorrect="on"
+                placeholder="Name here" />
+            <label for="name" class="form-label"> Assignment Name </label>
         </div>
-        <div>
-            <label for="due_date" style="font-size: 17px;"> Due Date: </label>
-            <input type="date" id="due_date" name="due_date" required placeholder="mm/dd/yyyy" />
+        <div class="form-floating mb-4">
+            <input type="date" id="due_date" class="form-control" name="due_date" required placeholder="mm/dd/yyyy" />
+            <label for="due_date" class="form-label"> Due Date </label>
         </div>
-        <div>
-            <label for="due_time" style="font-size: 17px;"> Due Time:</label>
-            <input type="time" id="due_time" name="due_time" required />
+        <div class="form-floating mb-4">
+            <input type="time" id="due_time" class="form-control" name="due_time" required />
+            <label for="due_time" class="form-label"> Due Time</label>
         </div>
-        <div>
-            <button
-                style="margin-top: 20px; font-size:15px; padding: 10px 10px; background-color: #e5a6a1; color: white; border-radius: 10px;"
+        <div class="mb-3">
+            <a href="{{ url_for('view_assignments_page') }}" class="btn btn-secondary btn-light"
+                style="margin-top: 20px; font-size:15px; padding: 10px 10px; background-color: #b99290; color: white; border-radius: 10px;"
+                name="back_button" type="submit"> Back </a>
+            <button class="btn btn-light"
+                style="margin-top: 20px; padding: 10px 10px; background-color: #e5a6a1; color: white; border-radius: 10px;"
                 name="submit_assignment" type="submit"> Submit </button>
         </div>
-    </form>
-    <script>
-        due_date.min = new Date().toLocaleDateString('fr-ca')
-    </script>
+</div>
+</form>
+<script>
+    due_date.min = new Date().toLocaleDateString('fr-ca')
+</script>
 
-    {% endblock %}
+{% endblock %}

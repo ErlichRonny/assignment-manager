@@ -132,13 +132,7 @@ class AssignmentManager:
                 return []
             formatted_assignments = []
             for assignment in sorted_assignents:
-                date = datetime.strptime(assignment[1], "%Y-%m-%d")
-                time = datetime.strptime(assignment[2], "%H:%M")
-                formatted_date = date.strftime("%m/%d/%y")
-                formatted_time = time.strftime("%I:%M %p")
-                formatted_assignments.append(Assignment(
-                    assignment[0], formatted_date, formatted_time)
-                )
+              formatted_assignments.append(Assignment(name=assignment[0],due_date=assignment[1],due_time=assignment[2]))
             return formatted_assignments
         except sqlite3.Error as error:
             print(f"Error printing assignments: {error}")

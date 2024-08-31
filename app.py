@@ -1,10 +1,11 @@
-from flask import Flask, request, render_template, redirect, url_for
+from flask import Flask, request, render_template, redirect, url_for, flash
 from assignment import Assignment
 from assignment_manager import AssignmentManager
 from datetime import datetime
 from tabulate import tabulate
 
 app = Flask(__name__)
+app.secret_key = 'testing123'  # Required for flash messages
 manager = AssignmentManager()
 
 
@@ -19,9 +20,9 @@ def add_assignment_page():
     return render_template("add_assignment.html")
 
 
-@app.route("/success/")
-def success_page():
-    return render_template("success.html")
+#@app.route("/success/")
+#def success_page():
+ #   return render_template("success.html")
     #TODO: change this to show message indicating success, instead of going to home
 
 @app.route("/view_assignments/")
@@ -69,19 +70,20 @@ def add_assignment():
     due_time = request.form.get("due_time")
     new_assignment = Assignment(name, due_date, due_time)
     if manager.find_assignment(name):
-        return {"Error": "Already an assignment with this name"}, 405
+        flash("Assignment with this name already exists!", "danger")
     else:
         manager.add_assignment(new_assignment)
-        return redirect(url_for("success_page"))
-    #TODO: redirection
+        flash("Assignment added successfully!", "success")
+    return redirect(url_for("add_assignment_page"))
 
 @app.route("/remove_assignment/<string:name>", methods=["GET"])
 def remove_assignment(name):
     result = manager.remove_assignment(name)
     if result is not None:
-        return redirect(url_for("view_assignments_page"))
+        flash("Assignment removed successfully!", "success")
     else:
-        return {"Error": "Assignment not found"}, 404
+        flash("Assignment not found!", "danger")
+    return redirect(url_for("view_assignments_page"))
 
 
 @app.route("/update_assignment/<string:name>", methods=["POST"])
@@ -92,14 +94,16 @@ def update_assignment(name):
     to_update = manager.find_assignment(name)
     
     if not to_update:
-        return {"Error": "Assignment does not exist"}, 404
-    if new_name:
-        manager.change_name(to_update, new_name)
-    if new_date:
-        manager.change_due_date(to_update, new_date)
-    if new_time :
-        manager.change_due_time(to_update, new_time)
-    return redirect(url_for("success_page"))
+        flash("Assignment does not exist!", "danger")
+    else:
+        if new_name:
+            manager.change_name(to_update, new_name)
+        if new_date:
+            manager.change_due_date(to_update, new_date)
+        if new_time :
+            manager.change_due_time(to_update, new_time)
+        flash("Assignment edited successfully!", "success")
+    return redirect(url_for("view_assignments_page"))
 
 if __name__ == "__main__":
     app.run(debug=True)
