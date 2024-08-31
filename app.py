@@ -9,10 +9,10 @@ app.secret_key = 'testing123'  # Required for flash messages
 manager = AssignmentManager()
 
 
-@app.route("/")
-def home():
-    weekly_assignments = manager.get_assignments(True)
-    return render_template("home.html", assignments=weekly_assignments)
+# @app.route("/")
+# def home():
+#     weekly_assignments = manager.get_assignments(True)
+#     return render_template("home.html", assignments=weekly_assignments)
 
 
 @app.route("/add_assignment/")
@@ -25,16 +25,16 @@ def add_assignment_page():
  #   return render_template("success.html")
     #TODO: change this to show message indicating success, instead of going to home
 
-@app.route("/view_assignments/")
-def view_assignments_page():
+@app.route("/")
+def home():
     all_assignments = manager.get_assignments()
     return render_template("view_assignments.html", assignments=all_assignments)
 
 
-@app.route("/update_assignment/<string:assignment_name>/", methods=["GET"])
-def update_assignment_page(assignment_name):
-    assignment = manager.find_assignment(assignment_name)
-    return render_template("update_assignment.html", assignment_name=assignment.name, due_date=assignment.due_date, due_time=assignment.due_time)
+# @app.route("/update_assignment/<string:assignment_name>/", methods=["GET"])
+# def update_assignment_page(assignment_name):
+#     assignment = manager.find_assignment(assignment_name)
+#     return render_template("update_assignment.html", assignment_name=assignment.name, due_date=assignment.due_date, due_time=assignment.due_time)
 
 
 @app.route("/assignments/<string:name>", methods=["GET"])
@@ -83,7 +83,7 @@ def remove_assignment(name):
         flash("Assignment removed successfully!", "success")
     else:
         flash("Assignment not found!", "danger")
-    return redirect(url_for("view_assignments_page"))
+    return redirect(url_for("home"))
 
 
 @app.route("/update_assignment/<string:name>", methods=["POST"])
@@ -103,7 +103,7 @@ def update_assignment(name):
         if new_time :
             manager.change_due_time(to_update, new_time)
         flash("Assignment edited successfully!", "success")
-    return redirect(url_for("view_assignments_page"))
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)

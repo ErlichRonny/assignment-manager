@@ -2,8 +2,31 @@
 
 {% block content %}
 <div class="container mt-4">
+    <div class="text-center">
+        <h1 class="mb-3">{% block title %} <u>Welcome to the Assignment Manager! </u> {% endblock %}</h1>
+        <h2> This application is designed to help you stay organized and balance your tasks with ease! </h2>
+    </div>
+</div>
+
+<div class="text-center mb-4">
+    <h2 style="color:#e5a6a1;"> <em>Upcoming Events This Week:</em></h2>
+</div>
+<div class="mb-5" style="font-size: 17px;">
+    {% if assignments %}
+    <ul class="list-group">
+        {% for assignment in assignments %}
+        <li class="list-group-item">{{ assignment.name }}: {{assignment.get_due_str() }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-left"> No assignments this week!</p>
+    {% endif %}
+</div>
+
+<div class="container mt-4">
     <div class="text-center mb-4">
-        <h1>{% block title %} Your Assignments {% endblock %}</h1>
+        <h1>{% block text %} Your Assignments {% endblock %}</h1>
     </div>
 </div>
 
