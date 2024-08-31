@@ -24,7 +24,7 @@ class Assignment:
         """
         Gets formatted due date/time as a string
         """
-        return f"Due on {self.due_date.strftime('%a, %m/%d/%y')} at {self.due_time.strftime('%I:%M %p')}"
+        return f"due on {self.due_date.strftime('%a, %m/%d/%y')} at {self.due_time.strftime('%I:%M %p')}"
 
     def set_name(self, new_name):
         """

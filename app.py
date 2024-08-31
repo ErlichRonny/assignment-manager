@@ -7,60 +7,10 @@ app = Flask(__name__)
 app.secret_key = 'testing123'  # Required for flash messages
 manager = AssignmentManager()
 
-
-# @app.route("/")
-# def home():
-#     weekly_assignments = manager.get_assignments(True)
-#     return render_template("home.html", assignments=weekly_assignments)
-
-
-@app.route("/add_assignment/")
-def add_assignment_page():
-    return render_template("add_assignment.html")
-
-
-#@app.route("/success/")
-#def success_page():
- #   return render_template("success.html")
-    #TODO: change this to show message indicating success, instead of going to home
-
 @app.route("/")
 def home():
     all_assignments = manager.get_assignments()
     return render_template("view_assignments.html", assignments=all_assignments)
-
-
-# @app.route("/update_assignment/<string:assignment_name>/", methods=["GET"])
-# def update_assignment_page(assignment_name):
-#     assignment = manager.find_assignment(assignment_name)
-#     return render_template("update_assignment.html", assignment_name=assignment.name, due_date=assignment.due_date, due_time=assignment.due_time)
-
-
-# @app.route("/assignments/<string:name>", methods=["GET"])
-# def view_assignment(name):
-#     assignment = manager.find_assignment(name)
-#     if assignment:
-#         pretty = f"Name: {assignment.name}, Due Date: {assignment.due_date}, Due Time: {assignment.due_time}"
-#         return pretty
-#     else:
-#         to_return = manager.most_similar(name)
-#         if to_return:
-#             return f"Closest match ---> Name: {to_return.name}, Due Date: {to_return.due_date}, Due Time: {to_return.due_time}"
-#         else:
-#             return {"Error": "Assignment not found"}, 404
-
-
-# @app.route("/assignments/", methods=["GET"])
-# def view_all_assignments():
-#     with manager.conn:
-#         manager.cursor.execute("SELECT * FROM assignments ORDER BY date ASC, time ASC")
-#         rows = manager.cursor.fetchall()
-#     table = []
-#     for row in rows:
-#         table.append([row[0], row[1], row[2]])
-#     table_printable = tabulate(table, headers=["Name","Due Date","Due Time"],tablefmt="grid")
-#     return table_printable,{'Content-Type':'text/plain'}
-
 
 @app.route("/add_assignment/", methods=["POST"])
 def add_assignment():
@@ -85,8 +35,6 @@ def remove_assignment(name):
     flash("Assignment removed successfully!", "success")
     return jsonify(sucess=True)
         
-
-
 @app.route("/update_assignment/<string:name>", methods=["POST"])
 def update_assignment(name):
     new_name = request.form.get("name")
@@ -106,8 +54,6 @@ def update_assignment(name):
         manager.change_due_time(to_update, new_time)
     flash("Assignment edited successfully!", "success")
     return jsonify(sucess=True)
-
-    
 
 if __name__ == "__main__":
     app.run(debug=True)
