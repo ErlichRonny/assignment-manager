@@ -54,7 +54,7 @@
         </tr>
         {% for assignment in assignments %}
         <tr>
-            <td>{{ assignment.name }}</td>
+            <td id="assignment_name">{{ assignment.name }}</td>
             <td>{{ assignment.due_date.strftime("%m/%d/%y") }}</td>
             <td>{{ assignment.due_time.strftime("%I:%M %p") }}</td>
             <td>
@@ -67,13 +67,10 @@
                     </button>
 
                     &nbsp;
-                    <div class="input-group">
-                        <a href="{{ url_for('remove_assignment', name=assignment.name) }}">
-                            <button class="btn"
-                                style="font-size: large; background-color: #e6151f; color: white; border: none; border-radius: 5px;">
-                                Delete</button>
-                        </a>
-                    </div>
+                    <button class="btn btn-primary" id="delete-btn"
+                        style="font-size: large; background-color: #e6151f; color: white; border: none; border-radius: 5px;"
+                        data-bs-toggle="modal" data-bs-target="#deleteModal" data-name="{{ assignment.name }}">Remove
+                    </button>
                 </div>
             </td>
         </tr>
@@ -107,8 +104,25 @@
                         <input type="time" id="modal_due_time" class="form-control" name="due_time" />
                         <label class="form-label" for="modal_due_time"> Due Time </label>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Save Changes</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal">
+    <div class="modal-dialog d-flex justify-content-center modal-dialog-centered">
+        <div class="modal-content w-75">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Assignment</h5>
+                <button type="button" background-color: #e5a6a1; class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p>Are you sure? This is for real!</p>
+                <button type="submit" id="modal-delete-btn" class="btn btn-danger">Remove</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             </div>
         </div>
     </div>
@@ -117,9 +131,9 @@
 <script>
     $(function () {
         $('button[id^="edit-btn"]').click(function (e) {
-            var name = $(this).data('name');
-            var dueDate = $(this).data('due-date');
-            var dueTime = $(this).data('due-time');
+            name = $(this).data('name');
+            dueDate = $(this).data('due-date');
+            dueTime = $(this).data('due-time');
             $('#modal_name').val(name);
             $('#modal_due_date').val(dueDate.split(" ")[0]);
             $('#modal_due_time').val(dueTime.split(" ")[1]);
@@ -130,7 +144,7 @@
 
         $('#editForm').on('submit', function (e) {
             e.preventDefault();
-            var formData = {
+            formData = {
                 name: $("#modal_name").val(),
                 due_date: $("#modal_due_date").val(),
                 due_time: $("#modal_due_time").val(),
@@ -141,15 +155,36 @@
                 type: 'POST',
                 data: formData,
                 success: function (data) {
-                    alert("Assignment updated successfully!")
+                    //alert("Assignment updated successfully!")
                     $('#editModal').modal('hide');
                     location.reload();
                 },
                 error: function () {
-                    alert("An error has occurred");
+                    //alert("An error has occurred");
                     $('#editModal').modal('hide');
                 }
             });
+        });
+
+        // just an ugly hack to "remember" the assignment name, used later below
+        $('button[id^="delete-btn"]').click(function (e) {
+            globalThis.assignment_to_delete = $(this).data('name');
+        });
+
+        $('button[id^="modal-delete-btn"]').click(function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: '/remove_assignment/'+encodeURI(globalThis.assignment_to_delete),
+                type: 'GET',
+                success: function (data) {
+                    $('#deleteModal').modal('hide');
+                    location.reload();
+                },
+                error: function () {
+                    $('#deleteModal').modal('hide');
+                }
+            });
+            globalThis.assignment_to_delete = null;
         });
     });
 </script>
