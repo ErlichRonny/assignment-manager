@@ -11,8 +11,8 @@ class Assignment:
         Initializes assignments with name, due date, due time
         """
         self.name = name
-        self.due_date = dateparser.parse(due_date).date()
-        self.due_time = dateparser.parse(due_time).time()
+        self.due_date = datetime.strptime(due_date, "%Y-%m-%d")
+        self.due_time = datetime.strptime(due_time, "%H:%M")
 
     def get_due(self):
         """
