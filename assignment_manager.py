@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
+
+import dateparser
 from assignment import Assignment
 import sqlite3
-import dateparser
-import difflib
+from typing import Optional, List
 
 
 class AssignmentManager:
@@ -18,7 +19,7 @@ class AssignmentManager:
         self.cursor = self.conn.cursor()
         self.setup_database()
 
-    def setup_database(self):
+    def setup_database(self) -> None:
         """
         Creates assignments table
         """
@@ -26,27 +27,32 @@ class AssignmentManager:
             """CREATE TABLE IF NOT EXISTS assignments (
                 name TEXT,
                 date TEXT,
-                time TEXT
+                time TEXT,
+                done INTEGER
             )"""
         )
         self.conn.commit()
 
-    def add_assignment(self, assignment):
+    def add_assignment(self, assignment: Assignment) -> None:
+        """
+        Adds assignment to the manager
+        """
         try:
             with self.conn:
                 self.cursor.execute(
-                    "INSERT INTO assignments (name, date, time) VALUES (?,?,?)",
+                    "INSERT INTO assignments (name, date, time, done) VALUES (?,?,?,?)",
                     (
                         assignment.name,
                         assignment.due_date.strftime("%Y-%m-%d"),
                         assignment.due_time.strftime("%H:%M"),
+                        assignment.done,
                     ),
                 )
             print(f"{assignment.name} added.")
         except sqlite3.Error as error:
             print(f"Error adding assignment: {error}")
 
-    def remove_assignment(self, assignment_name):
+    def remove_assignment(self, assignment_name: str) -> Optional[str]:
         """
         Removes assignment by name from the manager
         """
@@ -65,48 +71,7 @@ class AssignmentManager:
         except sqlite3.Error as error:
             print(f"Error removing assignment: {error}")
 
-    def print_sorted_assignments(self):
-        """
-        Prints all assignments, sorted by due date
-        """
-        try:
-            with self.conn:
-                self.cursor.execute(
-                    "SELECT * FROM assignments ORDER BY date ASC, time ASC "
-                )
-                sorted_assignments = self.cursor.fetchall()
-            if not sorted_assignments:
-                print("No upcoming assignments!")
-                return
-            print("\nUpcoming Assignments:\n")
-            for row in sorted_assignments:
-                print(f"{row[0]}: Due on {row[1]} at {row[2]}")
-        except sqlite3.Error as error:
-            print(f"Error printing assignments: {error}")
-
-    def print_weeks_assignments(self):
-        """
-        Prints assignments that are due within the upcoming week
-        """
-        try:
-            week_start = datetime.now().date()
-            week_end = datetime.now().date() + timedelta(days=7)
-            with self.conn:
-                self.cursor.execute(
-                    "SELECT * FROM assignments WHERE date BETWEEN ? and ? ORDER BY date ASC, time ASC",
-                    (week_start, week_end),
-                )
-                sorted_assignments = self.cursor.fetchall()
-            if not sorted_assignments:
-                print("No assignments this week!\n")
-                return
-            print("\nUpcoming Week's Assignments:\n")
-            for row in sorted_assignments:
-                print(f"{row[0]}: Due on {row[1]} at {row[2]}")
-        except sqlite3.Error as error:
-            print(f"Error printing current week's assignments: {error}")
-
-    def get_assignments(self, weeks_assignments=None):
+    def get_assignments(self, weeks_assignments=None) -> List[Assignment]:
         """
         Gets either all assignments, sorted by due date, or assignments that are due within the upcoming week
         """
@@ -132,56 +97,69 @@ class AssignmentManager:
                 return []
             formatted_assignments = []
             for assignment in sorted_assignents:
-              formatted_assignments.append(Assignment(name=assignment[0],due_date=assignment[1],due_time=assignment[2]))
+                formatted_assignments.append(
+                    Assignment(
+                        name=assignment[0],
+                        due_date=assignment[1],
+                        due_time=assignment[2],
+                        done=assignment[3],
+                    )
+                )
             return formatted_assignments
         except sqlite3.Error as error:
             print(f"Error printing assignments: {error}")
 
-    def set_database_field(self, field_name, old_field, new_field):
+    def set_database_field(self, assignment_name: str, field_name: str, field_value: str) -> None:
         """
         Updates specified field of an assignment
         """
         try:
             with self.conn:
                 self.cursor.execute(
-                    f"UPDATE assignments SET {field_name} = ? WHERE {field_name} = ?",
-                    (new_field, old_field),
+                    f"UPDATE assignments SET {field_name} = ? WHERE name = ?",
+                    (field_value, assignment_name),
                 )
         except sqlite3.Error as error:
             print(f"Error changing assignment name: {error}")
 
-    def change_name(self, assignment, new_name):
+    def change_name(self, assignment: Assignment, new_name: str) -> None:
         """
         Changes the name of an assignment
         """
         old_name = assignment.name
-        self.set_database_field("name", old_name, new_name)
+        self.set_database_field(old_name, "name", new_name)
         assignment.set_name(new_name)
         print(f"Name for {old_name} changed to {new_name}")
 
-    def change_due_date(self, assignment, new_due_date):
+    def change_done(self, assignment: Assignment, done: bool) -> None:
+        """
+        Set the done state
+        """
+        self.set_database_field(assignment.name, "done", done)
+        assignment.done = done
+        print(f"Assignment for {assignment.name} marked as {'done' if done else 'not done'}")
+
+    def change_due_date(self, assignment: Assignment, new_due_date: str) -> None:
         """
         Changes the due date of an assignment
         """
-        old_date = assignment.due_date.strftime("%Y-%m-%d")  # convert to string
         new_date = (
             dateparser.parse(new_due_date).date().strftime("%Y-%m-%d")
         )  # parse and convert to string
-        self.set_database_field("date", old_date, new_date)
+        self.set_database_field(assignment.name, "date", new_date)
         assignment.set_due_date(new_due_date)
-        print(f"Due date for {old_date} changed to {new_date}.")
+        print(f"Due date for {assignment.name} changed to {new_date}.")
 
-    def change_due_time(self, assignment, new_due_time):
+    def change_due_time(self, assignment: Assignment, new_due_time: str) -> None:
         """
         Changes the due time of an assignment
         """
-        old_time = assignment.due_time.strftime("%H:%M")
         new_time = dateparser.parse(new_due_time).time().strftime("%H:%M")
-        self.set_database_field("time", old_time, new_time)
+        self.set_database_field(assignment.name, "time", new_time)
         assignment.set_due_time(new_due_time)
-        print(f"Due time for {old_time} changed to {new_due_time}.")
+        print(f"Due time for {assignment.name} changed to {new_due_time}.")
 
-    def find_assignment(self, assignment_name):
+    def find_assignment(self, assignment_name: str) -> Optional[Assignment]:
         """
         Finds an assignment by name
         """
@@ -193,23 +171,12 @@ class AssignmentManager:
                 result = self.cursor.fetchone()
             if result:
                 return Assignment(
-                    name=result[0], due_date=result[1], due_time=result[2]
+                    name=result[0],
+                    due_date=result[1],
+                    due_time=result[2],
+                    done=result[3],
                 )
             else:
                 return None
         except sqlite3.Error as error:
             print(f"Error finding assignment: {error}")
-
-    def most_similar(self, assignment_name):
-        """
-        Finds the assignment name that's most similar to the one given
-        """
-        assignments = self.get_assignments()
-        assignment_names = []
-        for assignment in assignments:
-            assignment_names.append(assignment.name)
-        similar_names = difflib.get_close_matches(assignment_name, assignment_names)
-        if similar_names:
-            return self.find_assignment(similar_names[0])
-        else:
-            return None
