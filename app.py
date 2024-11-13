@@ -1,10 +1,13 @@
+import os
 from flask import Flask, request, render_template, flash, jsonify, Response
 from assignment import Assignment
 from assignment_manager import AssignmentManager
 from datetime import datetime
+from dotenv import load_dotenv
 
+load_dotenv() # Loads environment variables from .env
 app = Flask(__name__)
-app.secret_key = 'testing123'  # Required for flash messages
+app.secret_key = os.getenv("FLASK_SECRET_KEY")  # Required for flash messages
 manager = AssignmentManager()
 
 @app.route("/")
